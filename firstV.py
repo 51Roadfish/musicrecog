@@ -15,44 +15,36 @@ selected_file_path = ""
 
 def open_file():
     # 使用filedialog.askopenfilename打开文件选择对话框
-    # 这里你可以添加一些参数来自定义对话框，比如设置初始目录等
     file_path = filedialog.askopenfilename()
-
     # 检查用户是否选择了文件
     if file_path:
         # 更新标签以显示文件路径
         global selected_file_path  # 声明这是一个全局变量
         selected_file_path = file_path  # 存储文件路径
         file_label.config(text=file_path)
-
-        # 创建主窗口
+# 创建主窗口
 root = tk.Tk()
 # 设置窗口title
 root.title('桃园')
 root.geometry('450x450')
 # root_window.iconbitmap('C:/Users/Administrator/Desktop/favicon.ico')
-# 设置主窗口的背景颜色,颜色值可以是英文单词，或者颜色值的16进制数,除此之外还可以使用Tk内置的颜色常量
 root["background"] = "DarkSlateBlue"
-# 添加文本内,设置字体的前景色和背景色，和字体类型、大小
 text = tk.Label(root, text="A MUSIC WORLD BELONGS TO YOU", bg="pink", fg="black", font=('Times',40, 'bold italic'))
-# 将文本内容放置在主窗口内
 text.pack()
-# 创建第一个按钮：
+# 创建第一个按钮
 choose_button = tk.Button(root, text="choose a music file", bg="pink", fg="black",font=('Times', 30, 'bold italic'),command=open_file)
 choose_button.pack(pady=150)  # 可以调整这个值来控制按钮的位置
-
-# 创建第二个按钮：
+# 创建第二个按钮
 close_button = tk.Button(root, text="close", bg="pink", fg="black",font=('Times', 30, 'bold italic'),command=root.quit)
 close_button.pack(pady=50)  # 这里的pady值决定了按钮与上面控件的距离
-
 # 进入主循环，显示主窗口
 root.mainloop()
 
-def frequency_to_midi(frequency):#自己写的，输入一个频率（Hz）输出对应的MIDI值，不确定是否因为文件简单所以音阶里貌似准确率还行
+def frequency_to_midi(frequency):#输入一个频率（Hz）输出对应的MIDI值
     p = music21.pitch.Pitch()
     p.frequency = frequency
     return p.midi
-def aboutsecond(time):#自己写的，输入识别出来的音符时间，输出一个音符（十六分音符四分音符什么的）的标准时间（单位为秒），写得很糙所以偏差很大
+def aboutsecond(time):#输入识别出来的音符时间，输出一个音符（十六分音符四分音符什么的）的标准时间（单位为秒）
     if time>2.0 and time<=4.5:
        if time<=2.67:
             second = 2.0
@@ -84,7 +76,7 @@ def aboutsecond(time):#自己写的，输入识别出来的音符时间，输出
     else:
         second = 0.0
     return second
-class audio:#整个类是网上抄的，具体就是提取音频的特征，只抄了初始化和音高，剩下的音频特征不知道咋用，暂时还没抄进来
+class audio:#提取音频的特征
     def __init__(self, input_file, sr=None, frame_len=512, n_fft=None, win_step=2 / 3, window="hamming"):
         """
         初始化
@@ -150,7 +142,7 @@ if __name__ == '__main__':
             f0_all = np.array(f0_likely)
     #一帧持续时长0.032秒，见class里面_init_函数 “:param frame_len: 帧长，默认512个采样点(32ms,16kHz),与窗长相同”这行
     duration = 0.032
-    #创建列表然后把每帧时长和频率打包成数组（应该是数组？不确定）放到PITCH_LIST里
+    #创建列表然后把每帧时长和频率打包放到PITCH_LIST里
     PITCH_LIST = []
     for PitcH in f0_all:
             PITCH_LIST.append((PitcH,duration))
@@ -159,7 +151,7 @@ if __name__ == '__main__':
     length = []
     #notes列表储存音符，给每个音符指定了MIDI值和时间，这里时间还是0.032秒
     for PitcH,DuratioN in PITCH_LIST:
-        if np.isnan(PitcH):#nan应该是not a number的意思，我发现它留着的话最后一步会报错所以在这把它筛出去了，但我其实没太搞明白它对音符时间有没有影响
+        if np.isnan(PitcH):
            continue        #有影响估计也不会太大（根据最后结果来看）
         else:
             midi_note  =  frequency_to_midi(PitcH)#调用函数，频率转MIDI值
@@ -167,7 +159,7 @@ if __name__ == '__main__':
             note.duration = music21.duration.Duration(DuratioN)#定义出音符对象的时间
             notes.append(note)#存入列表
         #print(note.pitch.midi)#调试用来看MIDI值的，建议不要删
-    #下面的大循环是自己写的，很粗糙，主要作用是把0.032秒一个的音符合并成时间长度
+    #下面的大循环主要作用是把0.032秒一个的音符合并成时间长度
     #length列表存最终的音符对象，这里面的音符时间是最终谱子里显现的音符的时间
     k = 0
     for notE in notes:
